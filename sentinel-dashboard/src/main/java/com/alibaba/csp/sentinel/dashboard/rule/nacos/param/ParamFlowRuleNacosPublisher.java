@@ -11,9 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-/**
- * @author vector
- */
+
 @Component("paramFlowRuleNacosPublisher")
 public class ParamFlowRuleNacosPublisher implements DynamicRulePublisher<List<ParamFlowRuleEntity>> {
 
@@ -27,6 +25,6 @@ public class ParamFlowRuleNacosPublisher implements DynamicRulePublisher<List<Pa
             return;
         }
         configService.publishConfig(app +  NacosConfigUtil.PARAM_DATA_ID_POSTFIX,
-                NacosConfigUtil.GROUP_ID, JSON.toJSONString(rules));
+                NacosConfigUtil.GROUP_ID, JSON.toJSONString(rules), NacosConfigUtil.FILE_TYPE);
     }
 }

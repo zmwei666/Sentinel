@@ -11,9 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-/**
- * @author vector
- */
+
 @Component("authorityRuleNacosPublisher")
 public class AuthorityRuleNacosPublisher implements DynamicRulePublisher<List<AuthorityRuleEntity>> {
 
@@ -28,6 +26,6 @@ public class AuthorityRuleNacosPublisher implements DynamicRulePublisher<List<Au
         }
         configService.publishConfig(app + NacosConfigUtil.AUTHORITY_DATA_ID_POSTFIX,
                 NacosConfigUtil.GROUP_ID,
-                JSON.toJSONString(rules));
+                JSON.toJSONString(rules), NacosConfigUtil.FILE_TYPE);
     }
 }

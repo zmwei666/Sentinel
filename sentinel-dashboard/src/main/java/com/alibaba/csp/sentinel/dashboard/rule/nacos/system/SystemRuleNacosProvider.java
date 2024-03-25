@@ -12,10 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eric Zhao
- * @since 1.4.0
- */
+
 @Component("systemRuleNacosProvider")
 public class SystemRuleNacosProvider implements DynamicRuleProvider<List<SystemRuleEntity>> {
 

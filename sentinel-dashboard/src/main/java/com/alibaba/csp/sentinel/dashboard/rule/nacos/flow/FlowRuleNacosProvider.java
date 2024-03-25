@@ -3,8 +3,8 @@ package com.alibaba.csp.sentinel.dashboard.rule.nacos.flow;
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.FlowRuleEntity;
 import com.alibaba.csp.sentinel.dashboard.rule.DynamicRuleProvider;
 import com.alibaba.csp.sentinel.dashboard.rule.nacos.NacosConfigUtil;
-import com.alibaba.csp.sentinel.datasource.Converter;
 import com.alibaba.csp.sentinel.util.StringUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.config.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,17 +12,12 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eric Zhao
- * @since 1.4.0
- */
+
 @Component("flowRuleNacosProvider")
 public class FlowRuleNacosProvider implements DynamicRuleProvider<List<FlowRuleEntity>> {
 
     @Autowired
     private ConfigService configService;
-    @Autowired
-    private Converter<String, List<FlowRuleEntity>> converter;
 
     @Override
     public List<FlowRuleEntity> getRules(String appName) throws Exception {
@@ -31,6 +26,6 @@ public class FlowRuleNacosProvider implements DynamicRuleProvider<List<FlowRuleE
         if (StringUtil.isEmpty(rules)) {
             return new ArrayList<>();
         }
-        return converter.convert(rules);
+        return JSON.parseArray(rules, FlowRuleEntity.class);
     }
 }

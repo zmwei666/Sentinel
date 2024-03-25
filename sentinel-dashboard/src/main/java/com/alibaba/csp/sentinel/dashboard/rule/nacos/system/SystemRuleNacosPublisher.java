@@ -11,9 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * @author vector
- */
+
 @Component("systemRuleNacosPublisher")
 public class SystemRuleNacosPublisher implements DynamicRulePublisher<List<SystemRuleEntity>> {
 
@@ -27,6 +25,6 @@ public class SystemRuleNacosPublisher implements DynamicRulePublisher<List<Syste
             return;
         }
         configService.publishConfig(app +  NacosConfigUtil.SYSTEM_DATA_ID_POSTFIX,
-                NacosConfigUtil.GROUP_ID, JSON.toJSONString(rules));
+                NacosConfigUtil.GROUP_ID, JSON.toJSONString(rules), NacosConfigUtil.FILE_TYPE);
     }
 }
