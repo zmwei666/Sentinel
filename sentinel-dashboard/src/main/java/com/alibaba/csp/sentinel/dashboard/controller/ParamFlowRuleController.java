@@ -15,39 +15,34 @@
  */
 package com.alibaba.csp.sentinel.dashboard.controller;
 
+import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
+import com.alibaba.csp.sentinel.dashboard.auth.AuthService;
+import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
+import com.alibaba.csp.sentinel.dashboard.client.CommandNotFoundException;
+import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.SentinelVersion;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.ParamFlowRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.discovery.AppManagement;
+import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
+import com.alibaba.csp.sentinel.dashboard.domain.Result;
+import com.alibaba.csp.sentinel.dashboard.repository.rule.RuleRepository;
+import com.alibaba.csp.sentinel.dashboard.rule.nacos.param.ParamFlowRuleNacosProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.nacos.param.ParamFlowRuleNacosPublisher;
+import com.alibaba.csp.sentinel.dashboard.util.VersionUtils;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.util.StringUtil;
+import com.alibaba.fastjson.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import com.alibaba.csp.sentinel.dashboard.auth.AuthAction;
-import com.alibaba.csp.sentinel.dashboard.client.CommandNotFoundException;
-import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
-import com.alibaba.csp.sentinel.dashboard.discovery.AppManagement;
-import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
-import com.alibaba.csp.sentinel.dashboard.auth.AuthService;
-import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
-import com.alibaba.csp.sentinel.slots.block.RuleConstant;
-import com.alibaba.csp.sentinel.util.StringUtil;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.SentinelVersion;
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.ParamFlowRuleEntity;
-import com.alibaba.csp.sentinel.dashboard.domain.Result;
-import com.alibaba.csp.sentinel.dashboard.repository.rule.RuleRepository;
-import com.alibaba.csp.sentinel.dashboard.util.VersionUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author Eric Zhao
@@ -65,6 +60,13 @@ public class ParamFlowRuleController {
     private AppManagement appManagement;
     @Autowired
     private RuleRepository<ParamFlowRuleEntity, Long> repository;
+
+    @Resource
+    private ParamFlowRuleNacosProvider paramFlowRuleNacosProvider;
+
+    @Resource
+    private ParamFlowRuleNacosPublisher paramFlowRuleNacosPublisher;
+
 
     private boolean checkIfSupported(String app, String ip, int port) {
         try {
@@ -100,10 +102,13 @@ public class ParamFlowRuleController {
             return unsupportedVersion();
         }
         try {
-            return sentinelApiClient.fetchParamFlowRulesOfMachine(app, ip, port)
-                .thenApply(repository::saveAll)
-                .thenApply(Result::ofSuccess)
-                .get();
+            List<ParamFlowRuleEntity> rules= paramFlowRuleNacosProvider.getRules(app);
+            rules = repository.saveAll(rules);
+            return Result.ofSuccess(rules);
+//            return sentinelApiClient.fetchParamFlowRulesOfMachine(app, ip, port)
+//                .thenApply(repository::saveAll)
+//                .thenApply(Result::ofSuccess)
+//                .get();
         } catch (ExecutionException ex) {
             logger.error("Error when querying parameter flow rules", ex.getCause());
             if (isNotSupported(ex.getCause())) {
@@ -260,6 +265,13 @@ public class ParamFlowRuleController {
 
     private CompletableFuture<Void> publishRules(String app, String ip, Integer port) {
         List<ParamFlowRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
+        try {
+            logger.info("开始推送热点参数规则到nacos,rules:{}", JSON.toJSONString(rules));
+            paramFlowRuleNacosPublisher.publish(app,rules);
+            logger.info("推送热点参数规则到nacos成功");
+        } catch (Exception e) {
+            logger.error("推送热点参数规则到nacos错误：",e);
+        }
         return sentinelApiClient.setParamFlowRuleOfMachine(app, ip, port, rules);
     }
 
