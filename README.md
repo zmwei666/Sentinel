@@ -1,6 +1,102 @@
 # 写在前面的INFO信息
 基于sentinel v1.8.7 实现sentinel与nacos配置的双向传递
 
+# 如何部署？
+可以直接使用docker compose文件启动，但是必须设置 `NACOS_SERVER` 参数，一定要为真实的nacos地址, 而不能为 `localhost:8848` or `127.0.0.1:8848`, 因为这样设置，实际上读取的是docker容器的地址
+
+# 客户端如何接入？
+这里有三个重点，分别为
+ - `spring.cloud.sentinel.transport.dashboard` ： 控制台的地址，就是sentinel的地址
+ - `spring.cloud.sentinel.transport.clientIp` ： 微服务集群的地址，这个取决于sentinel是否能监控到你
+ - `spring.cloud.sentinel.transport.port` ：sentinel监控你的端口，默认 `8719` ，如果在一台服务器上有多个服务需要被监控，推荐指定这个端口
+
+完整的配置如下：
+```yaml
+# Spring
+spring: 
+  application:
+    # 应用名称
+    name: ruoyi-system
+  profiles:
+    # 环境配置
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        # 配置文件格式
+        file-extension: yml
+        # 共享配置
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+    sentinel:
+      # 取消控制台懒加载
+      eager: true
+      transport:
+        # 控制台地址
+        dashboard: 127.0.0.1:8718
+        # sentinel 在容器中，所以需要配置真实的地址，以便sentinel能访问到我的服务
+        clientIp: 172.21.144.1
+        port: 8719
+      # nacos配置持久化
+      datasource:
+        # 流控规则
+        flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.config.server-addr}
+            username: ${spring.cloud.nacos.config.username}
+            password: ${spring.cloud.nacos.config.password}
+            groupId: SENTINEL_GROUP
+            dataId: ${spring.application.name}-flow-rules
+            rule-type: flow
+        # 熔断降级
+        degrade:
+          nacos:
+            server-addr: ${spring.cloud.nacos.config.server-addr}
+            username: ${spring.cloud.nacos.config.username}
+            password: ${spring.cloud.nacos.config.password}
+            groupId: SENTINEL_GROUP
+            dataId: ${spring.application.name}-degrade-rules
+            rule-type: degrade
+        # 热点降级
+        param-flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.config.server-addr}
+            username: ${spring.cloud.nacos.config.username}
+            password: ${spring.cloud.nacos.config.password}
+            groupId: SENTINEL_GROUP
+            dataId: ${spring.application.name}-param-flow-rules
+            rule-type: param-flow
+        # 系统降级
+        system:
+          nacos:
+            server-addr: ${spring.cloud.nacos.config.server-addr}
+            username: ${spring.cloud.nacos.config.username}
+            password: ${spring.cloud.nacos.config.password}
+            groupId: SENTINEL_GROUP
+            dataId: ${spring.application.name}-system-rules
+            rule-type: system
+        # 授权降级
+        authority:
+          nacos:
+            server-addr: ${spring.cloud.nacos.config.server-addr}
+            username: ${spring.cloud.nacos.config.username}
+            password: ${spring.cloud.nacos.config.password}
+            groupId: SENTINEL_GROUP
+            dataId: ${spring.application.name}-authority-rules
+            rule-type: authority
+
+```
+
+
 # Sentinel: The Sentinel of Your Microservices
 
 <img src="https://user-images.githubusercontent.com/9434884/43697219-3cb4ef3a-9975-11e8-9a9c-73f4f537442d.png" alt="Sentinel Logo" width="50%">
