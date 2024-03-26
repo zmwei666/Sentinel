@@ -53,13 +53,13 @@
 
         <!-- Build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.source.version>17</java.source.version>
-        <java.target.version>17</java.target.version>
+        <java.source.version>1.8</java.source.version>
+        <java.target.version>1.8</java.target.version>
         <java.encoding>UTF-8</java.encoding>
         <maven.compiler.version>3.12.0</maven.compiler.version>
         <maven.surefire.version>3.2.5</maven.surefire.version>
         <maven.source.version>3.0.1</maven.source.version>
-        <maven.javadoc.version>3.0.1</maven.javadoc.version>
+        <maven.javadoc.version>3.2.0</maven.javadoc.version>
         <maven.deploy.version>2.8.2</maven.deploy.version>
         <maven.gpg.version>1.6</maven.gpg.version>
         <maven.jacoco.version>0.8.11</maven.jacoco.version>
@@ -286,7 +286,7 @@
                     <execution>
                         <id>default-compile</id>
                         <configuration>
-                            <release>17</release>
+                            <release>1.8</release>
                         </configuration>
                     </execution>
                     <execution>
@@ -390,7 +390,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- GPG -->
+<!--                     GPG-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
