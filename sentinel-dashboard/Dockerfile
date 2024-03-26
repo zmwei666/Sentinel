@@ -18,18 +18,23 @@
 #
 #CMD java ${JAVA_OPTS} -jar /home/sentinel-dashboard.jar
 FROM openjdk:8-jre-slim
+ARG SENTINEL_VERSION=1.8.7
 ENV POTR 8718
 ENV APIPORT 8719
 ENV HOST 'localhost'
-ENV NACOS_SERVER 'localhost:8848'
-ENV NACOS_USER_NAME 'nacos'
-ENV NACOS_PASSWORD 'nacos'
-ENV NACOS_NAMESPACE ''
-ENV NACOS_GROUPID 'SENTINEL_GROUP'
+#ENV NACOS_SERVER 'localhost:8848'
+#ENV SENTINEL_USERNAME sentinel
+#ENV SENTINEL_PASSWORD sentinel
+#ENV NACOS_USERNAME 'nacos'
+#ENV NACOS_PASSWORD 'nacos'
+#ENV NACOS_NAMESPACE ''
+#ENV NACOS_GROUPID 'SENTINEL_GROUP'
 
 EXPOSE ${POTR}
 EXPOSE ${APIPORT}
 COPY target/sentinel-dashboard.jar /home/sentinel-dashboard.jar
+COPY src/main/resources/application.properties /home/application.properties
+WORKDIR /home/
 RUN chmod -R +x /home/sentinel-dashboard.jar
 ENV JAVA_OPTS '-Dserver.port=${POTR} -Dcsp.sentinel.dashboard.server=${HOST}:${POTR} -Dproject.name=sentinel-dashboard -Dcsp.sentinel.api.port=${APIPORT}'
 CMD java ${JAVA_OPTS} -jar /home/sentinel-dashboard.jar
